@@ -66,8 +66,8 @@ mainScene.create = function()
     
     for(var x = 0; x < 7; x++)
     {
-        spButton1[x] = this.add.sprite(x * 16 +  40, 334, "string");
-        spButton2[x] = this.add.sprite(x * 16 + 184, 334, "string");
+        spButton1[x] = this.add.sprite(x * 16 +  40, 336, "string");
+        spButton2[x] = this.add.sprite(x * 16 + 184, 336, "string");
     }
     
     
@@ -81,9 +81,9 @@ mainScene.create = function()
         }
     }
     
-    setMessage("どちらにしますか。");
-    setButton1("くろいし");
-    setButton2("しろいし");
+    setMessage("＊「どちらにしますか");
+    setButton1("　　く　ろ");
+    setButton2("　　し　ろ");
     
     
 }
@@ -123,6 +123,9 @@ var clickStone = function()
             x: this.posX,
             y: this.posY
         };
+        
+        
+        
         
         turn++;
     }
