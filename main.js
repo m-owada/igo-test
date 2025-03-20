@@ -35,9 +35,9 @@ var prisoner =
 };
 
 var objStone = [];
-var objButton1 = [];
-var objButton2 = [];
-var objMessage = [];
+var objButton1 = null;
+var objButton2 = null;
+var objMessage = null;
 
 var timedEvent = null;
 
@@ -66,37 +66,39 @@ mainScene.create = function()
         }
     }
     
-    var button1 = this.add.image( 90, 340, "button").setInteractive();
-    var button2 = this.add.image(232, 340, "button").setInteractive();
-    var message = this.add.image(160, 420, "message");
+    objButton1 = this.add.image( 90, 340, "button").setInteractive();
+    objButton2 = this.add.image(232, 340, "button").setInteractive();
+    objMessage = this.add.image(160, 420, "message");
     
-    button1.alpha = 0.8;
-    button2.alpha = 0.8;
-    message.alpha = 0.8;
+    objButton1.on("pointerdown", downButton1);
+    objButton2.on("pointerdown", downButton2);
+    objButton1.on("pointerup", upButton1);
+    objButton2.on("pointerup", upButton2);
     
-    button1.on("pointerdown", clickButton1);
-    button2.on("pointerdown", clickButton2);
-    
-    
+    objButton1.text = [];
+    objButton2.text = [];
     for(var i = 0; i < 7; i++)
     {
-        objButton1[i] = this.add.sprite(i * 16 +  40, 336, "string");
-        objButton2[i] = this.add.sprite(i * 16 + 184, 336, "string");
+        objButton1.text[i] = this.add.sprite(i * 16 +  40, 336, "string");
+        objButton2.text[i] = this.add.sprite(i * 16 + 184, 336, "string");
     }
     
+    objMessage.text = [];
     var i = 0;
     for(var y = 0; y < 3; y++)
     {
         for(var x = 0; x < 17; x++)
         {
-            objMessage[i] = this.add.sprite(x * 16 + 32, y * 26 + 390, "string");
+            objMessage.text[i] = this.add.sprite(x * 16 + 32, y * 26 + 390, "string");
             i++;
         }
     }
     
-    setMessage("くろのばんです。");
-    setButton1("　　く　ろ");
-    setButton2("　　し　ろ");
+    setRecord();
+    
+    setButton1("　　もどる");
+    setButton2("");
+    setTurnMessage();
 }
 
 mainScene.update = function()
@@ -104,14 +106,47 @@ mainScene.update = function()
     
 }
 
-var clickButton1 = function()
+var downButton1 = function()
 {
+    if(record.length > 1)
+    {
+        board = structuredClone(record[record.length - 2]);
+        for(var x = 0; x < board.length; x++)
+        {
+            for(var y = 0; y < board[x].length; y++)
+            {
+                setBoard(board[x][y], x, y);
+            }
+        }
+        record.pop();
+        setTurnMessage();
+    }
     
+    setAlpha(objButton1, 0.6);
 }
 
-var clickButton2 = function()
+var downButton2 = function()
 {
-    
+    setAlpha(objButton2, 0.6);
+}
+
+var upButton1 = function()
+{
+    setAlpha(objButton1, 1.0);
+}
+
+var upButton2 = function()
+{
+    setAlpha(objButton2, 1.0);
+}
+
+var setAlpha = function(object, alpha)
+{
+    object.alpha = alpha;
+    for(var i = 0; i < object.text.length; i++)
+    {
+        object.text[i].alpha = alpha;
+    }
 }
 
 var clickStone = function()
@@ -120,23 +155,14 @@ var clickStone = function()
     if(checkLegal(color, this.posX, this.posY))
     {
         setStone(color, this.posX, this.posY);
-        setRecord(color, this.posX, this.posY);
-        
-        if(color == 1)
-        {
-            setMessage("しろのばんです。");
-        }
-        else
-        {
-            setMessage("くろのばんです。");
-        }
+        setRecord();
+        setTurnMessage();
     }
     else
     {
         setMessage("ここにいしはおけません。");
     }
 }
-
 
 var setMessage = function(message)
 {
@@ -145,9 +171,9 @@ var setMessage = function(message)
         timedEvent.remove(false);
     }
     
-    for(var i = 0; i < objMessage.length; i++)
+    for(var i = 0; i < objMessage.text.length; i++)
     {
-        objMessage[i].setFrame(0);
+        objMessage.text[i].setFrame(0);
     }
     
     var i = 0;
@@ -156,10 +182,10 @@ var setMessage = function(message)
         delay: 50,
         callback: () =>
         {
-            objMessage[i].setFrame(getCharList().indexOf(message.charAt(i)));
+            objMessage.text[i].setFrame(getCharList().indexOf(message.charAt(i)));
             i++;
         },
-        repeat: objMessage.length - 1
+        repeat: objMessage.text.length - 1
     });
 }
 
@@ -168,7 +194,7 @@ var setButton1 = function(message)
     var i = 0;
     for(var x = 0; x < 7; x++)
     {
-        objButton1[x].setFrame(getCharList().indexOf(message.charAt(i)));
+        objButton1.text[x].setFrame(getCharList().indexOf(message.charAt(i)));
         i++;
     }
 }
@@ -178,7 +204,7 @@ var setButton2 = function(message)
     var i = 0;
     for(var x = 0; x < 7; x++)
     {
-        objButton2[x].setFrame(getCharList().indexOf(message.charAt(i)));
+        objButton2.text[x].setFrame(getCharList().indexOf(message.charAt(i)));
         i++;
     }
 }
@@ -194,7 +220,7 @@ var getCharList = function()
 
 var getTurn = function()
 {
-    return record.length + 1;
+    return record.length;
 }
 
 var getColor = function()
@@ -209,14 +235,21 @@ var getColor = function()
     }
 }
 
-var setRecord = function(color, x, y)
+var setRecord = function()
 {
-    record[record.length] =
+    record[record.length] = structuredClone(board);
+}
+
+var setTurnMessage = function()
+{
+    if(getColor() == 1)
     {
-        color: color,
-        x: x,
-        y: y
-    };
+        setMessage("くろのばんです。");
+    }
+    else
+    {
+        setMessage("しろのばんです。");
+    }
 }
 
 var checkLegal = function(color, x, y)
