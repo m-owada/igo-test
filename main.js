@@ -19,11 +19,9 @@ var board = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];
 
-var record = [];
-
 var kou =
 {
-    turn: 0,
+    move: 0,
     x: 0,
     y: 0
 };
@@ -34,10 +32,15 @@ var prisoner =
     white: 0
 };
 
+var record = [];
+
 var objStone = [];
 var objButton1 = null;
 var objButton2 = null;
 var objMessage = null;
+var objBlack = [];
+var objWhite = [];
+var objMove = [];
 
 var timedEvent = null;
 
@@ -68,7 +71,7 @@ mainScene.create = function()
     
     objButton1 = this.add.image( 90, 340, "button").setInteractive();
     objButton2 = this.add.image(232, 340, "button").setInteractive();
-    objMessage = this.add.image(160, 420, "message");
+    objMessage = this.add.image(160, 408, "message");
     
     objButton1.on("pointerdown", downButton1);
     objButton2.on("pointerdown", downButton2);
@@ -85,7 +88,7 @@ mainScene.create = function()
     
     objMessage.text = [];
     var i = 0;
-    for(var y = 0; y < 3; y++)
+    for(var y = 0; y < 2; y++)
     {
         for(var x = 0; x < 17; x++)
         {
@@ -94,11 +97,22 @@ mainScene.create = function()
         }
     }
     
+    for(var i = 0; i < 2; i++)
+    {
+        objBlack[i] = this.add.sprite(i * 16 + 112, 460, "string");
+        objWhite[i] = this.add.sprite(i * 16 + 200, 460, "string");
+    }
+    
+    for(var i = 0; i < 3; i++)
+    {
+        objMove[i] = this.add.sprite(i * 16 + 248, 460, "string");
+    }
+    
     setRecord();
     
-    setButton1("　　もどる");
+    setButton1("　　まった");
     setButton2("");
-    setTurnMessage();
+    displayTurn();
 }
 
 mainScene.update = function()
@@ -110,18 +124,10 @@ var downButton1 = function()
 {
     if(record.length > 1)
     {
-        board = structuredClone(record[record.length - 2]);
-        for(var x = 0; x < board.length; x++)
-        {
-            for(var y = 0; y < board[x].length; y++)
-            {
-                setBoard(board[x][y], x, y);
-            }
-        }
         record.pop();
-        setTurnMessage();
+        setUndo();
     }
-    
+    displayTurn();
     setAlpha(objButton1, 0.6);
 }
 
@@ -156,7 +162,7 @@ var clickStone = function()
     {
         setStone(color, this.posX, this.posY);
         setRecord();
-        setTurnMessage();
+        displayTurn();
     }
     else
     {
@@ -191,21 +197,41 @@ var setMessage = function(message)
 
 var setButton1 = function(message)
 {
-    var i = 0;
-    for(var x = 0; x < 7; x++)
+    for(var i = 0; i < objButton1.text.length; i++)
     {
-        objButton1.text[x].setFrame(getCharList().indexOf(message.charAt(i)));
-        i++;
+        objButton1.text[i].setFrame(getCharList().indexOf(message.charAt(i)));
     }
 }
 
 var setButton2 = function(message)
 {
-    var i = 0;
-    for(var x = 0; x < 7; x++)
+    for(var i = 0; i < objButton2.text.length; i++)
     {
-        objButton2.text[x].setFrame(getCharList().indexOf(message.charAt(i)));
-        i++;
+        objButton2.text[i].setFrame(getCharList().indexOf(message.charAt(i)));
+    }
+}
+
+var setBlack = function(value)
+{
+    for(var i = 0; i < objBlack.length; i++)
+    {
+        objBlack[i].setFrame(getCharList().indexOf(value.charAt(i)));
+    }
+}
+
+var setWhite = function(value)
+{
+    for(var i = 0; i < objWhite.length; i++)
+    {
+        objWhite[i].setFrame(getCharList().indexOf(value.charAt(i)));
+    }
+}
+
+var setMove = function(value)
+{
+    for(var i = 0; i < objMove.length; i++)
+    {
+        objMove[i].setFrame(getCharList().indexOf(value.charAt(i)));
     }
 }
 
@@ -218,14 +244,14 @@ var getCharList = function()
            "＊「…！？♪ー。ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ１２３４５６７８９０＿";
 }
 
-var getTurn = function()
+var getMove = function()
 {
     return record.length;
 }
 
 var getColor = function()
 {
-    if(getTurn() % 2 != 0)
+    if(getMove() % 2 != 0)
     {
         return 1;
     }
@@ -237,10 +263,32 @@ var getColor = function()
 
 var setRecord = function()
 {
-    record[record.length] = structuredClone(board);
+    record[record.length] =
+    {
+        board   : structuredClone(board),
+        kou     : structuredClone(kou),
+        prisoner: structuredClone(prisoner)
+    }
 }
 
-var setTurnMessage = function()
+var setUndo = function()
+{
+    if(record.length > 0)
+    {
+        board = structuredClone(record[record.length - 1].board);
+        for(var x = 0; x < board.length; x++)
+        {
+            for(var y = 0; y < board[x].length; y++)
+            {
+                setBoard(board[x][y], x, y);
+            }
+        }
+        kou = structuredClone(record[record.length - 1].kou);
+        prisoner = structuredClone(record[record.length - 1].prisoner);
+    }
+}
+
+var displayTurn = function()
 {
     if(getColor() == 1)
     {
@@ -250,6 +298,18 @@ var setTurnMessage = function()
     {
         setMessage("しろのばんです。");
     }
+    
+    setBlack(toFullWidth(String(prisoner.black).padStart(2, "0")));
+    setWhite(toFullWidth(String(prisoner.white).padStart(2, "0")));
+    setMove(toFullWidth(String(getMove()).padStart(3, "0")));
+}
+
+var toFullWidth = function(str)
+{
+    return String(str).replace(/[!-~]/g, (s) =>
+    {
+        return String.fromCharCode(s.charCodeAt(0) + 0xFEE0);
+    });
 }
 
 var checkLegal = function(color, x, y)
@@ -259,17 +319,20 @@ var checkLegal = function(color, x, y)
         return false;
     }
     
-    if(getTurn() > 1)
-    {
-        if(kou.x == x && kou.y == y && kou.turn == getTurn() - 1)
-        {
-            return false;
-        }
-    }
-    
     if(checkSuicide(color, x, y))
     {
         return false;
+    }
+    
+    if(getMove() > 1)
+    {
+        if(kou.x == x && kou.y == y && kou.move == getMove() - 1)
+        {
+            if(!checkSnapback(color, x, y))
+            {
+                return false;
+            }
+        }
     }
     
     return true;
@@ -279,9 +342,7 @@ var checkSuicide = function(color, x, y)
 {
     board[x][y] = color;
     
-    var checkBoard = getCheckBoard();
-    
-    if(doCheckRemoveStone(color, x, y, checkBoard))
+    if(doCheckRemoveStone(color, x, y))
     {
         var opponet = (color == 1 ? 2 : 1);
         
@@ -289,8 +350,7 @@ var checkSuicide = function(color, x, y)
         {
             if(board[x - 1][y] == opponet)
             {
-                checkBoard = getCheckBoard();
-                if(doCheckRemoveStone(opponet, x - 1, y, checkBoard))
+                if(doCheckRemoveStone(opponet, x - 1, y))
                 {
                     board[x][y] = 0;
                     return false;
@@ -301,8 +361,7 @@ var checkSuicide = function(color, x, y)
         {
             if(board[x][y - 1] == opponet)
             {
-                checkBoard = getCheckBoard();
-                if(doCheckRemoveStone(opponet, x, y - 1, checkBoard))
+                if(doCheckRemoveStone(opponet, x, y - 1))
                 {
                     board[x][y] = 0;
                     return false;
@@ -313,8 +372,7 @@ var checkSuicide = function(color, x, y)
         {
             if(board[x + 1][y] == opponet)
             {
-                checkBoard = getCheckBoard();
-                if(doCheckRemoveStone(opponet, x + 1, y, checkBoard))
+                if(doCheckRemoveStone(opponet, x + 1, y))
                 {
                     board[x][y] = 0;
                     return false;
@@ -325,8 +383,7 @@ var checkSuicide = function(color, x, y)
         {
             if(board[x][y + 1] == opponet)
             {
-                checkBoard = getCheckBoard();
-                if(doCheckRemoveStone(opponet, x, y + 1, checkBoard))
+                if(doCheckRemoveStone(opponet, x, y + 1))
                 {
                     board[x][y] = 0;
                     return false;
@@ -341,6 +398,37 @@ var checkSuicide = function(color, x, y)
         board[x][y] = 0;
         return false;
     }
+}
+
+var checkSnapback = function(color, x, y)
+{
+    var isSnapback = false;
+    board[x][y] = color;
+    
+    var prisonerCnt = 0;
+    if(x > 0)
+    {
+        prisonerCnt += removeStone(color, x - 1, y);
+    }
+    if(y > 0)
+    {
+        prisonerCnt += removeStone(color, x, y - 1);
+    }
+    if(x < board.length - 1)
+    {
+        prisonerCnt += removeStone(color, x + 1, y);
+    }
+    if(y < board[x].length - 1)
+    {
+        prisonerCnt += removeStone(color, x, y + 1);
+    }
+    if(prisonerCnt > 1)
+    {
+        isSnapback = true;
+    }
+    
+    setUndo();
+    return isSnapback;
 }
 
 var setStone = function(color, x, y)
@@ -389,7 +477,7 @@ var setStone = function(color, x, y)
     var prisonerAll = prisonerL + prisonerR + prisonerU + prisonerD;
     if(isKou && prisonerAll == 1)
     {
-        kou.turn = getTurn();
+        kou.move = getMove();
         if(prisonerL == 1)
         {
             kou.x = x - 1;
@@ -414,7 +502,7 @@ var setStone = function(color, x, y)
     
     if(prisonerAll > 0)
     {
-        if(color = 1)
+        if(color == 1)
         {
             prisoner.black += prisonerAll;
         }
@@ -440,9 +528,9 @@ var removeStone = function(color, x, y)
     
     var checkBoard = getCheckBoard();
     
-    if(doCheckRemoveStone(board[x][y], x, y, checkBoard))
+    if(doCheckRemoveStone(board[x][y], x, y))
     {
-        return doRemoveStone(board[x][y], x, y, 0);
+        return doRemoveStone(board[x][y], x, y);
     }
     return 0;
 }
@@ -461,7 +549,7 @@ var getCheckBoard = function()
     return checkBoard;
 }
 
-var doCheckRemoveStone = function(color, x, y, checkBoard)
+var doCheckRemoveStone = function(color, x, y, checkBoard = getCheckBoard())
 {
     if(checkBoard[x][y])
     {
@@ -509,7 +597,7 @@ var doCheckRemoveStone = function(color, x, y, checkBoard)
     return true;
 }
 
-var doRemoveStone = function(color, x, y, prisonerCnt)
+var doRemoveStone = function(color, x, y, prisonerCnt = 0)
 {
     if(board[x][y] == color)
     {
