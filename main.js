@@ -19,8 +19,9 @@ var board = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];
 
-var cursor =
+var turn =
 {
+    color: 0,
     x: -20,
     y: -20
 };
@@ -85,7 +86,7 @@ mainScene.create = function()
         repeat: -1
     });
     
-    objCursor = this.add.sprite(cursor.x, cursor.y, "cursor");
+    objCursor = this.add.sprite(turn.x, turn.y, "cursor");
     objCursor.anims.play("cursor");
     
     objButton1 = this.add.image( 90, 340, "button").setInteractive();
@@ -132,7 +133,7 @@ mainScene.create = function()
     setRecord();
     
     setButton1("　　まった");
-    setButton2("");
+    setButton2("　　ぱ　す");
     displayTurn();
 }
 
@@ -154,6 +155,19 @@ var downButton1 = function()
 
 var downButton2 = function()
 {
+    if(record.length > 1)
+    {
+        if(turn.color == 2)
+        {
+            turn.color = 1;
+        }
+        else
+        {
+            turn.color = 2;
+        }
+        setRecord();
+    }
+    displayTurn();
     setAlpha(objButton2, 0.6);
 }
 
@@ -182,7 +196,7 @@ var clickStone = function()
     if(checkLegal(color, this.posX, this.posY))
     {
         setStone(color, this.posX, this.posY);
-        setCursor(this.posX, this.posY);
+        setCursor(color, this.posX, this.posY);
         setRecord();
         displayTurn();
     }
@@ -192,12 +206,13 @@ var clickStone = function()
     }
 }
 
-var setCursor = function(x, y)
+var setCursor = function(color, x, y)
 {
-    cursor.x = x;
-    cursor.y = y;
-    objCursor.x = cursor.x * 24 + 16;
-    objCursor.y = cursor.y * 24 + 16;
+    turn.color = color;
+    turn.x = x;
+    turn.y = y;
+    objCursor.x = turn.x * 24 + 16;
+    objCursor.y = turn.y * 24 + 16;
 }
 
 var setMessage = function(message)
@@ -281,13 +296,13 @@ var getMove = function()
 
 var getColor = function()
 {
-    if(getMove() % 2 != 0)
+    if(record[record.length - 1].turn.color == 1)
     {
-        return 1;
+        return 2;
     }
     else
     {
-        return 2;
+        return 1;
     }
 }
 
@@ -296,7 +311,7 @@ var setRecord = function()
     record[record.length] =
     {
         board   : structuredClone(board),
-        cursor  : structuredClone(cursor),
+        turn    : structuredClone(turn),
         kou     : structuredClone(kou),
         prisoner: structuredClone(prisoner)
     }
@@ -314,8 +329,8 @@ var setUndo = function()
                 setBoard(board[x][y], x, y);
             }
         }
-        cursor = structuredClone(record[record.length - 1].cursor);
-        setCursor(cursor.x, cursor.y);
+        turn = structuredClone(record[record.length - 1].turn);
+        setCursor(turn.color, turn.x, turn.y);
         kou = structuredClone(record[record.length - 1].kou);
         prisoner = structuredClone(record[record.length - 1].prisoner);
     }
