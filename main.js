@@ -22,8 +22,8 @@ var board = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 var turn =
 {
     color: 0,
-    x: -20,
-    y: -20
+    x: -10,
+    y: -10
 };
 
 var kou =
@@ -125,7 +125,7 @@ mainScene.create = function()
         objWhite[i] = this.add.sprite(i * 16 + 200, 460, "string");
     }
     
-    for(var i = 0; i < 3; i++)
+    for(var i = 0; i < 4; i++)
     {
         objMove[i] = this.add.sprite(i * 16 + 248, 460, "string");
     }
@@ -155,18 +155,15 @@ var downButton1 = function()
 
 var downButton2 = function()
 {
-    if(record.length > 1)
+    if(turn.color != 1)
     {
-        if(turn.color == 2)
-        {
-            turn.color = 1;
-        }
-        else
-        {
-            turn.color = 2;
-        }
-        setRecord();
+        turn.color = 1;
     }
+    else
+    {
+        turn.color = 2;
+    }
+    setRecord();
     displayTurn();
     setAlpha(objButton2, 0.6);
 }
@@ -286,23 +283,23 @@ var getCharList = function()
            "がぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽゃゅょっぁぃぅぇぉ" +
            "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン" +
            "ガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポヴャュョッァィゥェォ" + 
-           "＊「…！？♪ー。ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ１２３４５６７８９０＿";
+           "＊「：…！？♪ー。ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ１２３４５６７８９０＿";
 }
 
 var getMove = function()
 {
-    return record.length;
+    return record.length - 1;
 }
 
 var getColor = function()
 {
-    if(record[record.length - 1].turn.color == 1)
+    if(record[record.length - 1].turn.color != 1)
     {
-        return 2;
+        return 1;
     }
     else
     {
-        return 1;
+        return 2;
     }
 }
 
@@ -365,13 +362,17 @@ var displayTurn = function()
         setWhite("＊＊");
     }
     
-    if(getMove() < 1000)
+    if(getMove() == 0)
     {
-        setMove(toFullWidth(String(getMove()).padStart(3, "0")));
+        setMove("ーーーー");
+    }
+    else if(getMove() < 1000)
+    {
+        setMove(toFullWidth(String(getMove()).padStart(3, "0")) + "て");
     }
     else
     {
-        setMove("＊＊＊");
+        setMove("＊＊＊て");
     }
 }
 
