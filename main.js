@@ -91,7 +91,7 @@ mainScene.create = function()
     
     objButton1 = this.add.image( 90, 340, "button").setInteractive();
     objButton2 = this.add.image(232, 340, "button").setInteractive();
-    objMessage = this.add.image(160, 408, "message");
+    objMessage = this.add.image(160, 408, "message").setInteractive();
     
     objButton1.on("pointerdown", downButton1);
     objButton2.on("pointerdown", downButton2);
@@ -107,6 +107,10 @@ mainScene.create = function()
         objButton1.text[i] = this.add.sprite(i * 16 +  40, 336, "string");
         objButton2.text[i] = this.add.sprite(i * 16 + 184, 336, "string");
     }
+    
+    objMessage.on("pointerdown", downMessage);
+    objMessage.on("pointerup", upMessage);
+    objMessage.on("pointerout", upMessage);
     
     objMessage.text = [];
     var i = 0;
@@ -168,6 +172,22 @@ var downButton2 = function()
     setAlpha(objButton2, 0.6);
 }
 
+var downMessage = function()
+{
+    var map = getTerritoryMap();
+    for(var x = 0; x < board.length; x++)
+    {
+        for(var y = 0; y < board[x].length; y++)
+        {
+            if(board[x][y] == 0)
+            {
+                objStone[x][y].setFrame(map[x][y]);
+                objStone[x][y].alpha = 0.2;
+            }
+        }
+    }
+}
+
 var upButton1 = function()
 {
     setAlpha(objButton1, 1.0);
@@ -176,6 +196,21 @@ var upButton1 = function()
 var upButton2 = function()
 {
     setAlpha(objButton2, 1.0);
+}
+
+var upMessage = function()
+{
+    for(var x = 0; x < board.length; x++)
+    {
+        for(var y = 0; y < board[x].length; y++)
+        {
+            if(board[x][y] == 0)
+            {
+                objStone[x][y].setFrame(0);
+                objStone[x][y].alpha = 1;
+            }
+        }
+    }
 }
 
 var setAlpha = function(object, alpha)
@@ -694,6 +729,83 @@ var doRemoveStone = function(color, x, y, prisonerCnt = 0)
         }
     }
     return prisonerCnt;
+}
+
+var getTerritoryMap = function()
+{
+    var checkBoard = getCheckBoard();
+    var territoryMap = [];
+    for(var x = 0; x < board.length; x++)
+    {
+        territoryMap[x] = [];
+        for(var y = 0; y < board[x].length; y++)
+        {
+            territoryMap[x][y] = 0;
+        }
+    }
+    
+    for(var x = 0; x < board.length; x++)
+    {
+        for(var y = 0; y < board[x].length; y++)
+        {
+            if(!checkBoard[x][y] && board[x][y] == 0)
+            {
+                var { territory, owner } = exploreTerritory(x, y, checkBoard);
+                territory.forEach(([tx, ty]) =>
+                {
+                    territoryMap[tx][ty] = owner;
+                });
+            }
+        }
+    }
+    return territoryMap;
+}
+
+var exploreTerritory = function(x, y, checkBoard)
+{
+    var stack = [[x, y]];
+    var territory = [];
+    var surroundingColors = new Set();
+    
+    while(stack.length > 0)
+    {
+        var [cx, cy] = stack.pop();
+        if(checkBoard[cx][cy])
+        {
+            continue;
+        }
+        checkBoard[cx][cy] = true;
+        territory.push([cx, cy]);
+        
+        for(var [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]])
+        {
+            var nx = cx + dx;
+            var ny = cy + dy;
+            if(nx >= 0 && nx < board.length && ny >= 0 && ny < board[nx].length)
+            {
+                if(!checkBoard[nx][ny])
+                {
+                    if(board[nx][ny] == 0)
+                    {
+                        stack.push([nx, ny]);
+                    }
+                    else
+                    {
+                        surroundingColors.add(board[nx][ny]);
+                    }
+                }
+            }
+        }
+    }
+    
+    if(surroundingColors.size == 1)
+    {
+        return { territory, owner: [...surroundingColors][0] };
+    }
+    else
+    {
+        return { territory, owner: 0 };
+    }
 }
 
 var evalBoard = function()
