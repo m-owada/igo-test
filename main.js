@@ -5,6 +5,8 @@
 
 var mainScene = new Phaser.Scene("mainScene");
 
+var params = new URLSearchParams(window.location.search);
+
 var board = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -46,6 +48,7 @@ var objCursor = null;
 var objButton1 = null;
 var objButton2 = null;
 var objMessage = null;
+var objShow = [];
 var objBlack = [];
 var objWhite = [];
 var objMove = [];
@@ -57,8 +60,16 @@ mainScene.preload = function()
     this.load.image("board", "img/board.png");
     this.load.image("button", "img/button.png");
     this.load.image("message", "img/message.png");
-    this.load.spritesheet("stone", "img/stone.png", { frameWidth: 20, frameHeight: 20 });
-    this.load.spritesheet("cursor", "img/cursor.png", { frameWidth: 20, frameHeight: 20 });
+    if(params.get("mode") == "p")
+    {
+        this.load.spritesheet("stone", "img/stone_p.png", { frameWidth: 20, frameHeight: 20 });
+        this.load.spritesheet("cursor", "img/cursor_p.png", { frameWidth: 20, frameHeight: 20 });
+    }
+    else
+    {
+        this.load.spritesheet("stone", "img/stone.png", { frameWidth: 20, frameHeight: 20 });
+        this.load.spritesheet("cursor", "img/cursor.png", { frameWidth: 20, frameHeight: 20 });
+    }
     this.load.spritesheet("string", "img/string.png", { frameWidth: 16, frameHeight: 24 });
 }
 
@@ -125,6 +136,7 @@ mainScene.create = function()
     
     for(var i = 0; i < 2; i++)
     {
+        objShow[i]  = this.add.sprite(i * 16 +  24, 460, "string");
         objBlack[i] = this.add.sprite(i * 16 + 112, 460, "string");
         objWhite[i] = this.add.sprite(i * 16 + 200, 460, "string");
     }
@@ -175,6 +187,7 @@ var downButton2 = function()
 var downMessage = function()
 {
     var map = getTerritoryMap();
+    var score = { black: 0, white: 0 };
     for(var x = 0; x < board.length; x++)
     {
         for(var y = 0; y < board[x].length; y++)
@@ -183,8 +196,35 @@ var downMessage = function()
             {
                 objStone[x][y].setFrame(map[x][y]);
                 objStone[x][y].alpha = 0.2;
+                if(map[x][y] == 1)
+                {
+                    score.black++;
+                }
+                else if(map[x][y] == 2)
+                {
+                    score.white++;
+                }
             }
         }
+    }
+    
+    setShow("　じ");
+    
+    if(score.black < 100)
+    {
+        setBlack(toFullWidth(String(score.black).padStart(2, "0")));
+    }
+    else
+    {
+        setBlack("＊＊");
+    }
+    if(score.white < 100)
+    {
+        setWhite(toFullWidth(String(score.white).padStart(2, "0")));
+    }
+    else
+    {
+        setWhite("＊＊");
     }
 }
 
@@ -211,6 +251,7 @@ var upMessage = function()
             }
         }
     }
+    displayHama();
 }
 
 var setAlpha = function(object, alpha)
@@ -285,6 +326,14 @@ var setButton2 = function(message)
     for(var i = 0; i < objButton2.text.length; i++)
     {
         objButton2.text[i].setFrame(getCharList().indexOf(message.charAt(i)));
+    }
+}
+
+var setShow = function(value)
+{
+    for(var i = 0; i < objShow.length; i++)
+    {
+        objShow[i].setFrame(getCharList().indexOf(value.charAt(i)));
     }
 }
 
@@ -378,6 +427,13 @@ var displayTurn = function()
     {
         setMessage("しろのばんです。");
     }
+    displayHama();
+    displayMove();
+}
+
+var displayHama = function()
+{
+    setShow("ハマ");
     
     if(prisoner.black < 100)
     {
@@ -387,7 +443,6 @@ var displayTurn = function()
     {
         setBlack("＊＊");
     }
-    
     if(prisoner.white < 100)
     {
         setWhite(toFullWidth(String(prisoner.white).padStart(2, "0")));
@@ -396,7 +451,10 @@ var displayTurn = function()
     {
         setWhite("＊＊");
     }
-    
+}
+
+var displayMove = function()
+{
     if(getMove() == 0)
     {
         setMove("ーーーー");
@@ -805,108 +863,6 @@ var exploreTerritory = function(x, y, checkBoard)
     else
     {
         return { territory, owner: 0 };
-    }
-}
-
-var evalBoard = function()
-{
-    var blackBoard = [];
-    var whiteBoard = [];
-    var totalBoard = [];
-    
-    for(var x = 0; x < board.length; x++)
-    {
-        blackBoard[x] = [];
-        whiteBoard[x] = [];
-        totalBoard[x] = [];
-        for(var y = 0; y < board[x].length; y++)
-        {
-            blackBoard[x][y] = 0;
-            whiteBoard[x][y] = 0;
-            totalBoard[x][y] = 0;
-        }
-    }
-    
-    for(var x = 0; x < board.length; x++)
-    {
-        for(var y = 0; y < board[x].length; y++)
-        {
-            if(board[x][y] == 1)
-            {
-                checkTerritory(blackBoard, x, y);
-            }
-            else if(board[x][y] == 2)
-            {
-                checkTerritory(whiteBoard, x, y);
-            }
-        }
-    }
-    
-    var value = 0;
-    for(var x = 0; x < board.length; x++)
-    {
-        for(var y = 0; y < board[x].length; y++)
-        {
-            if(board[x][y] == 1)
-            {
-                totalBoard[x][y] = 1;
-            }
-            else if(board[x][y] == 2)
-            {
-                totalBoard[x][y] = 2;
-            }
-            else
-            {
-                if(blackBoard[x][y] > whiteBoard[x][y])
-                {
-                    totalBoard[x][y] = 1;
-                    value++;
-                }
-                else if(blackBoard[x][y] < whiteBoard[x][y])
-                {
-                    totalBoard[x][y] = 2;
-                    value--;
-                }
-            }
-        }
-    }
-    return value;
-}
-
-var checkTerritory = function(paraBoard, x, y)
-{
-    setValue(paraBoard, x - 3, y);
-    setValue(paraBoard, x - 2, y - 1);
-    setValue(paraBoard, x - 2, y);
-    setValue(paraBoard, x - 2, y + 1);
-    setValue(paraBoard, x - 1, y - 2);
-    setValue(paraBoard, x - 1, y - 1);
-    setValue(paraBoard, x - 1, y);
-    setValue(paraBoard, x - 1, y + 1);
-    setValue(paraBoard, x - 1, y + 2);
-    setValue(paraBoard, x, y - 3);
-    setValue(paraBoard, x, y - 2);
-    setValue(paraBoard, x, y - 1);
-    setValue(paraBoard, x, y);
-    setValue(paraBoard, x, y + 1);
-    setValue(paraBoard, x, y + 2);
-    setValue(paraBoard, x, y + 3);
-    setValue(paraBoard, x + 1, y - 2);
-    setValue(paraBoard, x + 1, y - 1);
-    setValue(paraBoard, x + 1, y);
-    setValue(paraBoard, x + 1, y + 1);
-    setValue(paraBoard, x + 1, y + 2);
-    setValue(paraBoard, x + 2, y - 1);
-    setValue(paraBoard, x + 2, y);
-    setValue(paraBoard, x + 2, y + 1);
-    setValue(paraBoard, x + 3, y);
-}
-
-var setValue = function(paraBoard, x, y)
-{
-    if(x > 0 && x < paraBoard.length - 1 && y > 0 && y < paraBoard[x].length - 1)
-    {
-        paraBoard[x][y] += 1;
     }
 }
 
