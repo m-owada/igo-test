@@ -568,6 +568,9 @@ var pasteSGF = async function()
     await navigator.clipboard.readText().then(text =>
     {
         sgf = text;
+    }).catch(err =>
+    {
+        setMessage("ペーストにしっぱいしました。");
     });
     
     var { error, moves } = parseSGF(sgf);
