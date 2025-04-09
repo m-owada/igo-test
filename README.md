@@ -2,6 +2,8 @@
 
 実装中...
 
+メッセージをダブルクリックするとＳＧＦのコピペができます。
+
 https://m-owada.github.io/igo-test/
 
-[ﾏｯﾏｰｯ!!](https://m-owada.github.io/igo-test/?mode=p)
+[(@Θ@) ﾏｯﾏｰｯ!!](https://m-owada.github.io/igo-test/?mode=p)

@@ -25,7 +25,8 @@ var turn =
 {
     color: 0,
     x: -10,
-    y: -10
+    y: -10,
+    pass: false
 };
 
 var kou =
@@ -53,6 +54,8 @@ var objBlack = [];
 var objWhite = [];
 var objMove = [];
 
+var setting = 0;
+var lastClickTime = 0;
 var timedEvent = null;
 
 mainScene.preload = function()
@@ -120,8 +123,6 @@ mainScene.create = function()
     }
     
     objMessage.on("pointerdown", downMessage);
-    objMessage.on("pointerup", upMessage);
-    objMessage.on("pointerout", upMessage);
     
     objMessage.text = [];
     var i = 0;
@@ -147,9 +148,6 @@ mainScene.create = function()
     }
     
     setRecord();
-    
-    setButton1("　　まった");
-    setButton2("　　ぱ　す");
     displayTurn();
 }
 
@@ -160,31 +158,70 @@ mainScene.update = function()
 
 var downButton1 = function()
 {
-    if(record.length > 1)
+    if(setting > 1) return;
+    
+    if(objButton1.message == "　　まった")
     {
-        record.pop();
-        setUndo();
+        if(record.length > 1)
+        {
+            record.pop();
+            setUndo();
+        }
+        displayTurn();
     }
-    displayTurn();
+    else if(objButton1.message == "　　コピー")
+    {
+        copySGF();
+    }
     setAlpha(objButton1, 0.6);
 }
 
 var downButton2 = function()
 {
-    if(turn.color != 1)
+    if(setting > 1) return;
+    
+    if(objButton2.message == "　　ぱ　す")
     {
-        turn.color = 1;
+        if(turn.color != 1)
+        {
+            setTurn(1, turn.x, turn.y, true);
+        }
+        else
+        {
+            setTurn(2, turn.x, turn.y, true);
+        }
+        setRecord();
+        displayTurn();
     }
-    else
+    else if(objButton2.message == "　　ペースト")
     {
-        turn.color = 2;
+        pasteSGF();
     }
-    setRecord();
-    displayTurn();
     setAlpha(objButton2, 0.6);
 }
 
 var downMessage = function()
+{
+    if(setting > 1) return;
+    
+    var currentTime = mainScene.time.now;
+    if(currentTime - lastClickTime < 300)
+    {
+        if(setting == 0)
+        {
+            settingON();
+            setting = 1;
+        }
+        else if(setting == 1)
+        {
+            settingOFF();
+            setting = 0;
+        }
+    }
+    lastClickTime = currentTime;
+}
+
+var settingON = function()
 {
     var map = getTerritoryMap();
     var score = { black: 0, white: 0 };
@@ -208,6 +245,9 @@ var downMessage = function()
         }
     }
     
+    score.black += prisoner.black;
+    score.white += prisoner.white;
+    
     setShow("　じ");
     
     if(score.black < 100)
@@ -226,19 +266,13 @@ var downMessage = function()
     {
         setWhite("＊＊");
     }
+    
+    setMessage("ＳＧＦのコピーとペーストです。");
+    setButton1("　　コピー");
+    setButton2("　　ペースト");
 }
 
-var upButton1 = function()
-{
-    setAlpha(objButton1, 1.0);
-}
-
-var upButton2 = function()
-{
-    setAlpha(objButton2, 1.0);
-}
-
-var upMessage = function()
+var settingOFF = function()
 {
     for(var x = 0; x < board.length; x++)
     {
@@ -251,7 +285,19 @@ var upMessage = function()
             }
         }
     }
-    displayHama();
+    displayTurn();
+}
+
+var upButton1 = function()
+{
+    if(setting > 1) return;
+    setAlpha(objButton1, 1.0);
+}
+
+var upButton2 = function()
+{
+    if(setting > 1) return;
+    setAlpha(objButton2, 1.0);
 }
 
 var setAlpha = function(object, alpha)
@@ -265,11 +311,13 @@ var setAlpha = function(object, alpha)
 
 var clickStone = function()
 {
+    if(setting > 0) return;
+    
     var color = getColor();
     if(checkLegal(color, this.posX, this.posY))
     {
         setStone(color, this.posX, this.posY);
-        setCursor(color, this.posX, this.posY);
+        setTurn(color, this.posX, this.posY);
         setRecord();
         displayTurn();
     }
@@ -279,11 +327,12 @@ var clickStone = function()
     }
 }
 
-var setCursor = function(color, x, y)
+var setTurn = function(color, x, y, pass = false)
 {
     turn.color = color;
     turn.x = x;
     turn.y = y;
+    turn.pass = pass;
     objCursor.x = turn.x * 24 + 16;
     objCursor.y = turn.y * 24 + 16;
 }
@@ -319,6 +368,7 @@ var setButton1 = function(message)
     {
         objButton1.text[i].setFrame(getCharList().indexOf(message.charAt(i)));
     }
+    objButton1.message = message;
 }
 
 var setButton2 = function(message)
@@ -327,6 +377,7 @@ var setButton2 = function(message)
     {
         objButton2.text[i].setFrame(getCharList().indexOf(message.charAt(i)));
     }
+    objButton2.message = message;
 }
 
 var setShow = function(value)
@@ -411,7 +462,7 @@ var setUndo = function()
             }
         }
         turn = structuredClone(record[record.length - 1].turn);
-        setCursor(turn.color, turn.x, turn.y);
+        setTurn(turn.color, turn.x, turn.y);
         kou = structuredClone(record[record.length - 1].kou);
         prisoner = structuredClone(record[record.length - 1].prisoner);
     }
@@ -427,6 +478,8 @@ var displayTurn = function()
     {
         setMessage("しろのばんです。");
     }
+    setButton1("　　まった");
+    setButton2("　　ぱ　す");
     displayHama();
     displayMove();
 }
@@ -475,6 +528,179 @@ var toFullWidth = function(str)
     {
         return String.fromCharCode(s.charCodeAt(0) + 0xFEE0);
     });
+}
+
+var copySGF = function()
+{
+    var sgf = "(;GM[1]SZ[13]";
+    for(var i = 0; i < record.length; i++)
+    {
+        if(record[i].turn.color == 1)
+        {
+            if(record[i].turn.pass)
+            {
+                sgf += ";B[tt]";
+            }
+            else
+            {
+                sgf += ";B[" + toAlphabet(record[i].turn.x) + toAlphabet(record[i].turn.y) + "]";
+            }
+        }
+        else if(record[i].turn.color == 2)
+        {
+            if(record[i].turn.pass)
+            {
+                sgf += ";W[tt]";
+            }
+            else
+            {
+                sgf += ";W[" + toAlphabet(record[i].turn.x) + toAlphabet(record[i].turn.y) + "]";
+            }
+        }
+    }
+    navigator.clipboard.writeText(sgf);
+    setMessage("コピーしました。");
+}
+
+var pasteSGF = async function()
+{
+    var sgf = "";
+    await navigator.clipboard.readText().then(text =>
+    {
+        sgf = text;
+    });
+    
+    var { error, moves } = parseSGF(sgf);
+    
+    if(error)
+    {
+        setMessage("よみこみにしっぱいしました。");
+        return;
+    }
+    
+    if(moves.length == 0)
+    {
+        setMessage("ＳＧＦをコピーしてください。");
+        return;
+    }
+    
+    settingOFF();
+    setting = 2;
+    
+    setAlpha(objButton1, 0.6);
+    setAlpha(objButton2, 0.6);
+    
+    record.length = 1;
+    setUndo();
+    
+    for(move of moves)
+    {
+        if(!move.pass)
+        {
+            if(checkLegal(move.color, move.x, move.y))
+            {
+                setStone(move.color, move.x, move.y);
+                setTurn(move.color, move.x, move.y);
+                setRecord();
+            }
+            else
+            {
+                move.pass = true;
+            }
+        }
+        if(move.pass)
+        {
+            setTurn(move.color, turn.x, turn.y, true);
+            setRecord();
+        }
+        displayTurn();
+        await sleep(500);
+    }
+    
+    setAlpha(objButton1, 1.0);
+    setAlpha(objButton2, 1.0);
+    
+    setting = 0;
+}
+
+var parseSGF = function(sgf)
+{
+    var error = false;
+    var moves = [];
+    
+    var match = null;
+    
+    var headerRegex = /(GM|SZ)\[([^\]]+)\]/g;
+    while((match = headerRegex.exec(sgf)) != null)
+    {
+        if(match[1] == "GM")
+        {
+            if(match[2] != "1")
+            {
+                error = true;
+                break;
+            }
+        }
+        else if(match[1] == "SZ")
+        {
+            if(match[2] != "13")
+            {
+                error = true;
+                break;
+            }
+        }
+    }
+    
+    var color = 0;
+    var x = 0;
+    var y = 0;
+    var pass = false;
+    
+    var moveRegex = /;([BW])\[([a-z]{2})\]/g;
+    while((match = moveRegex.exec(sgf)) != null)
+    {
+        if(match[1] == "B")
+        {
+            color = 1;
+        }
+        else
+        {
+            color = 2;
+        }
+        if(match[2] == "tt")
+        {
+            pass = true;
+        }
+        else if(match[2] >= "aa" && match[2] <= "mm")
+        {
+            x = toNumber(match[2][0]);
+            y = toNumber(match[2][1]);
+            pass = false;
+        }
+        else
+        {
+            error = true;
+            break;
+        }
+        moves.push({ color, x, y, pass });
+    }
+    
+    return { error, moves };
+}
+
+var toAlphabet = function(value)
+{
+    return String.fromCharCode(97 + value);
+}
+
+var toNumber = function(value)
+{
+    return value.charCodeAt(0) - 97;
+}
+
+var sleep = function(ms)
+{
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 var checkLegal = function(color, x, y)
