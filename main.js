@@ -558,7 +558,14 @@ var copySGF = function()
             }
         }
     }
-    navigator.clipboard.writeText(sgf);
+    if(navigator.clipboard)
+    {
+        navigator.clipboard.writeText(sgf);
+    }
+    else
+    {
+        copyToClipboardFallback();
+    }
     setMessage("コピーしました。");
 }
 
@@ -571,6 +578,7 @@ var pasteSGF = async function()
     }).catch(err =>
     {
         setMessage("ペーストにしっぱいしました。");
+        return;
     });
     
     var { error, moves } = parseSGF(sgf);
@@ -704,6 +712,18 @@ var toNumber = function(value)
 var sleep = function(ms)
 {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+var copyToClipboardFallback = function(text)
+{
+    var textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.top = "-100px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
 }
 
 var checkLegal = function(color, x, y)
