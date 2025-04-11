@@ -558,15 +558,13 @@ var copySGF = function()
             }
         }
     }
-    if(navigator.clipboard)
+    navigator.clipboard.writeText(sgf).then(() =>
     {
-        navigator.clipboard.writeText(sgf);
-    }
-    else
+        setMessage("コピーしました。");
+    }).catch(err =>
     {
-        copyToClipboardFallback();
-    }
-    setMessage("コピーしました。");
+        setMessage("コピーにしっぱいしました。");
+    });
 }
 
 var pasteSGF = async function()
@@ -638,7 +636,6 @@ var parseSGF = function(sgf)
 {
     var error = false;
     var moves = [];
-    
     var match = null;
     
     var headerRegex = /(GM|SZ)\[([^\]]+)\]/g;
@@ -712,18 +709,6 @@ var toNumber = function(value)
 var sleep = function(ms)
 {
     return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-var copyToClipboardFallback = function(text)
-{
-    var textarea = document.createElement("textarea");
-    textarea.value = text;
-    textarea.style.position = "fixed";
-    textarea.style.top = "-100px";
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand("copy");
-    document.body.removeChild(textarea);
 }
 
 var checkLegal = function(color, x, y)
