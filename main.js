@@ -558,17 +558,7 @@ var copySGF = function()
             }
         }
     }
-    var copyButton = document.getElementById("copyButton");
-    copyButton.addEventListener("click", () =>
-    {
-        copyToClipboard(sgf);
-    });
-    copyButton.click();
-}
-
-var copyToClipboard = function(text)
-{
-    navigator.clipboard.writeText(text).then(() =>
+    navigator.clipboard.writeText(sgf).then(() =>
     {
         setMessage("コピーしました。");
     }).catch(err =>
@@ -587,6 +577,7 @@ var pasteSGF = async function()
     }).catch(err =>
     {
         setMessage("ペーストにしっぱいしました。");
+        console.log(err);
         return;
     });
     
