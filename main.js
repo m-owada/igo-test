@@ -558,7 +558,17 @@ var copySGF = function()
             }
         }
     }
-    navigator.clipboard.writeText(sgf).then(() =>
+    var copyButton = document.getElementById("copyButton");
+    copyButton.addEventListener("click", () =>
+    {
+        copyToClipboard(sgf);
+    });
+    copyButton.click();
+}
+
+var copyToClipboard = function(text)
+{
+    navigator.clipboard.writeText(text).then(() =>
     {
         setMessage("コピーしました。");
     }).catch(err =>
