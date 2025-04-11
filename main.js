@@ -574,6 +574,7 @@ var copyToClipboard = function(text)
     }).catch(err =>
     {
         setMessage("コピーにしっぱいしました。");
+        console.log(err);
     });
 }
 
