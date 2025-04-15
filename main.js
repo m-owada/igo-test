@@ -575,10 +575,8 @@ var pasteSGF = async function()
         setMessage("よみこみにしっぱいしました。");
         return;
     }
-    
     if(moves.length == 0)
     {
-        setMessage("ＳＧＦをコピーしてください。");
         return;
     }
     
@@ -612,7 +610,7 @@ var pasteSGF = async function()
             setRecord();
         }
         displayTurn();
-        await sleep(500);
+        await sleep(800);
     }
     
     setAlpha(objButton1, 1.0);
