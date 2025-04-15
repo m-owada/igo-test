@@ -558,28 +558,16 @@ var copySGF = function()
             }
         }
     }
-    navigator.clipboard.writeText(sgf).then(() =>
-    {
-        setMessage("コピーしました。");
-    }).catch(err =>
-    {
-        window.prompt("コピーしてください。", sgf);
-    });
+    window.prompt("コピーしてください。", sgf);
 }
 
 var pasteSGF = async function()
 {
-    var sgf = "";
-    await navigator.clipboard.readText().then(text =>
+    var sgf = window.prompt("ペーストしてください。");
+    if(sgf == null)
     {
-        sgf = text;
-    }).catch(err =>
-    {
-        setMessage("ペーストにしっぱいしました。");
-        console.log(err);
         return;
-    });
-    
+    }
     var { error, moves } = parseSGF(sgf);
     
     if(error)
