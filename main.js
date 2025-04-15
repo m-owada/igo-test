@@ -563,8 +563,7 @@ var copySGF = function()
         setMessage("コピーしました。");
     }).catch(err =>
     {
-        setMessage("コピーにしっぱいしました。");
-        console.log(err);
+        window.prompt("コピーしてください。", sgf);
     });
 }
 
